@@ -1,24 +1,33 @@
 package com.iesfbmoll.webScrapping.Data;
 
 import javax.xml.bind.annotation.*;
+import java.io.Serializable;
 import java.util.List;
-@XmlRootElement(name="myCatalog")
+
+@XmlRootElement(name = "myFilms")
 @XmlAccessorType(XmlAccessType.FIELD)
-public class FilmList {
+public class FilmList implements Serializable {
     @XmlElement(name = "name")
     private String name;
-    @XmlElementWrapper(name = "products")
-    @XmlElement(name = "product")
-    private List<Film> games;
 
+    @XmlElementWrapper(name = "films")
+    @XmlElement(name = "film")
+    private List<Film> films;
 
-
-
-    public List<Film> getProducts() {
-        return games;
+    public String getName() {
+        return name;
     }
 
-    public void setProducts(List<Film> games) {
-        this.games = games;
+    public void setName(String name) {
+        this.name = name;
     }
+
+    public void setFilms(List<Film> films) {
+        this.films = films;
+    }
+
+    public List<Film> getFilms() {
+        return films;
+    }
+
 }

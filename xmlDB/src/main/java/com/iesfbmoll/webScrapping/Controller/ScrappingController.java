@@ -1,6 +1,7 @@
 package com.iesfbmoll.webScrapping.Controller;
 
 import com.iesfbmoll.webScrapping.Data.Film;
+import com.iesfbmoll.webScrapping.Data.FilmList;
 import com.iesfbmoll.webScrapping.FileUtils.HTMLParser;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestParam;
@@ -17,10 +18,11 @@ public class ScrappingController {
     @GetMapping("/getfilms")
     public List<Film> getGames(@RequestParam(value = "name", defaultValue = "") String name) {
         HTMLParser htmlParser = new HTMLParser();
-        ArrayList<Film> arrData;
-        arrData = htmlParser.getWebContent(DEFAULT_URI + name);
-        htmlParser.marshall2JSON(FILE_NAME, arrData, name);
-        return arrData;
+        FilmList filmList = new FilmList();
+        filmList.setFilms(htmlParser.getWebContent(DEFAULT_URI + name));
+        htmlParser.marshall2XML(FILE_NAME,filmList,name);
+        htmlParser.marshall2JSON(FILE_NAME,filmList.getFilms(), name);
+        return filmList.getFilms();
     }
 
 

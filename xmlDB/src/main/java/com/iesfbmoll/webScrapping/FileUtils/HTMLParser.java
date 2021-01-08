@@ -8,6 +8,7 @@ import com.fasterxml.jackson.databind.MapperFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.module.jaxb.JaxbAnnotationIntrospector;
 import com.iesfbmoll.webScrapping.Data.Film;
+import com.iesfbmoll.webScrapping.Data.FilmList;
 import org.jsoup.Connection;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
@@ -15,6 +16,9 @@ import org.jsoup.nodes.Element;
 import org.jsoup.select.Elements;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import javax.xml.bind.JAXBContext;
+import javax.xml.bind.Marshaller;
+import javax.xml.bind.Unmarshaller;
 import java.io.*;
 import java.util.ArrayList;
 import java.util.List;
@@ -33,7 +37,6 @@ public class HTMLParser {
     }
 
     private static final Logger log = LoggerFactory.getLogger(HTMLParser.class);
-    private final String BACKUP_FILE = String.format("%s\\.fbmoll\\backup.json", System.getProperty("user.home"));
     private final String FILM_SELECTOR = "div.fa-shadow-nb.item-search";
     private final String TITLE_SELECTOR = "div.mc-title";
     private final String FILM_DATA_SELECTOR = "div.movie-card-1";
@@ -89,19 +92,19 @@ public class HTMLParser {
     @SuppressWarnings("unchecked")
     public <T extends Serializable> T getWebContent(String URI) {
         ArrayList<Film> films = new ArrayList<>();
-        File backupFile = new File(BACKUP_FILE);
         T o;
         if (getStatus(URI) == 200) {
             Document document = getHtmlDocument(URI);
             Elements filmsElements = document.select(FILM_SELECTOR);
             getDataFilm(filmsElements, films);
+            o = (T) films;
+            return o;
 
         } else {
             log.error("La página solicitada no está activa actualmente.");
-                films = unMarshallJson(backupFile, Film.class);
         }
-        o = (T) films;
-        return o;
+
+        return null;
     }
 
     /**
@@ -171,12 +174,15 @@ public class HTMLParser {
 
         filePath = String.format("%s\\%s.json",filePath,fileName);
         File file = new File(filePath);
-        try {
-            getMapper().writeValue(file, list);
-        } catch (IOException e) {
-            e.printStackTrace();
+        if(list.size() > 0){
+            try {
+                getMapper().writeValue(file, list);
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+            return file;
         }
-        return file;
+        return null;
     }
 
     /**
@@ -196,4 +202,36 @@ public class HTMLParser {
         }
         return (T) list;
     }
+
+    public File marshall2XML(String path, FilmList filmList ,String fileName) {
+        path = String.format("%s\\%s.xml",path,fileName);
+        File file = new File(path);
+        filmList.setName("Lista de peliculas");
+        if(filmList.getFilms().size() > 0){
+            try {
+                JAXBContext context = JAXBContext.newInstance(filmList.getClass());
+                Marshaller m = context.createMarshaller();
+                m.setProperty(Marshaller.JAXB_FORMATTED_OUTPUT, true);
+                m.marshal(filmList, file);
+            } catch (Exception e) {
+                log.error("Marshalling file", e);
+            }
+            return file;
+        }
+        return null;
+    }
+    public <T extends Serializable> T unmarshallContent(File file, T filmList) {
+        try {
+            JAXBContext context = JAXBContext.newInstance(filmList.getClass());
+            Unmarshaller um = context.createUnmarshaller();
+            if (file.exists() && !file.isDirectory()) {
+                filmList = (T) um.unmarshal(file);
+            }
+            return  filmList;
+        } catch (Exception e) {
+            log.error("Marshalling file", e);
+        }
+        return null;
+    }
+
 }
