@@ -8,7 +8,7 @@ public class Film {
     private String year;
     private String duration;
     private ArrayList<String> cast;
-    private String filmRating;
+    private double filmRating;
     private String description;
 
     public String getLink() {
@@ -51,11 +51,11 @@ public class Film {
         this.cast = cast;
     }
 
-    public String getFilmRating() {
+    public double getFilmRating() {
         return filmRating;
     }
 
-    public void setFilmRating(String filmRating) {
+    public void setFilmRating(double filmRating) {
         this.filmRating = filmRating;
     }
 

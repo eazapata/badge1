@@ -8,7 +8,6 @@ import com.fasterxml.jackson.databind.MapperFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.module.jaxb.JaxbAnnotationIntrospector;
 import com.iesfbmoll.webScrapping.Data.Film;
-import org.apache.commons.lang3.StringUtils;
 import org.jsoup.Connection;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
@@ -16,6 +15,7 @@ import org.jsoup.nodes.Element;
 import org.jsoup.select.Elements;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
 import java.io.*;
 import java.util.ArrayList;
 import java.util.List;
@@ -46,6 +46,7 @@ public class HTMLParser {
     private final String CAST_SELECTOR_NULL = "dd.card-cast";
     private final String LINK_TAG = "a";
     private final String LINK_ATTR = "href";
+    private final String USER_AGENT = "Mozilla/5.0";
 
     /**
      * Método que comprueba el estado de una página indicada y devuelve su resultado con un entero.
@@ -57,7 +58,7 @@ public class HTMLParser {
         Connection.Response response;
         int responseCode = 400;
         try {
-            response = Jsoup.connect(URI).userAgent("Mozilla/5.0").timeout(100000).ignoreHttpErrors(true).execute();
+            response = Jsoup.connect(URI).userAgent(USER_AGENT).timeout(100000).ignoreHttpErrors(true).execute();
             responseCode = response.statusCode();
         } catch (Exception ex) {
             log.error("No se puede acceder a la página");
@@ -75,7 +76,7 @@ public class HTMLParser {
     public Document getHtmlDocument(String URI) {
         Document doc = null;
         try {
-            doc = Jsoup.connect(URI).userAgent("Mozilla/5.0").timeout(100000).get();
+            doc = Jsoup.connect(URI).userAgent(USER_AGENT).timeout(100000).get();
         } catch (Exception ex) {
             log.error("Error al obtener el contenido HTML");
         }
@@ -99,7 +100,6 @@ public class HTMLParser {
             getDataFilm(filmsElements, films);
             o = (T) films;
             return o;
-
         } else {
             log.error("La página solicitada no está activa actualmente.");
         }
@@ -125,7 +125,7 @@ public class HTMLParser {
                 Elements dataFilm = document.select(ROW_SELECTOR);
                 film.setYear(dataFilm.select(YEAR_SELECTOR).text());
                 film.setDuration(dataFilm.select(DURATION_SELECTOR).text());
-                film.setFilmRating(document.select(RATING_SELECTOR).text());
+                film.setFilmRating(Utils.replace(document.select(RATING_SELECTOR).text()));
                 film.setDescription(dataFilm.select(DESCRIPTION_SELECTOR).text());
 
                 if (dataFilm.select(CAST_SELECTOR).size() == 0) {
@@ -136,7 +136,7 @@ public class HTMLParser {
             } else {
                 film.setYear(errorText);
                 film.setDuration(errorText);
-                film.setFilmRating(StringUtils.EMPTY);
+                film.setFilmRating(0);
                 film.setDescription(errorText);
             }
             films.add(film);
@@ -177,16 +177,16 @@ public class HTMLParser {
      * @return archivo donde se ha almacenado la información.
      */
     public File marshall2JSON(String filePath, List<?> list, String fileName) {
-        Utils.checkDirectory(filePath);
-        filePath = String.format("%s\\%s.json", filePath, fileName);
-        File file = new File(filePath);
         if (list.size() > 0) {
             try {
+                Utils.checkDirectory(filePath);
+                filePath = String.format("%s\\%s.json", filePath, fileName);
+                File file = new File(filePath);
                 getMapper().writeValue(file, list);
+                return file;
             } catch (IOException e) {
                 log.error("Marshalling error.");
             }
-            return file;
         }
         return null;
     }

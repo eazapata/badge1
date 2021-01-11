@@ -139,6 +139,8 @@ public class HTMLParser {
             } else {
                 film.setYear(errorText);
                 film.setDuration(errorText);
+                film.setFilmRating(0);
+                film.setDescription(errorText);
             }
             films.add(film);
         }
@@ -178,16 +180,16 @@ public class HTMLParser {
      * @return archivo donde se ha almacenado la información.
      */
     public File marshall2JSON(String filePath, List<?> list, String fileName) {
-        Utils.checkDirectory(filePath);
-        filePath = String.format("%s\\%s.json", filePath, fileName);
-        File file = new File(filePath);
         if (list.size() > 0) {
             try {
+                Utils.checkDirectory(filePath);
+                filePath = String.format("%s\\%s.json", filePath, fileName);
+                File file = new File(filePath);
                 getMapper().writeValue(file, list);
+                return file;
             } catch (IOException e) {
-                e.printStackTrace();
+                log.error("Error marshalling");
             }
-            return file;
         }
         return null;
     }
@@ -206,7 +208,7 @@ public class HTMLParser {
         try {
             list = getMapper().readValue(file, getMapper().getTypeFactory().constructCollectionType(ArrayList.class, typeClass));
         } catch (IOException e) {
-            e.printStackTrace();
+            log.error("Error unmarshalling");
         }
         return (T) list;
     }
@@ -220,20 +222,22 @@ public class HTMLParser {
      * @return Devuelve el archivo donde se ha guardado la información.
      */
     public File marshall2XML(String path, FilmList filmList, String fileName) {
-        Utils.checkDirectory(path);
-        path = String.format("%s\\%s.xml", path, fileName);
-        File file = new File(path);
-        filmList.setName("Lista de peliculas");
         if (filmList.getFilms().size() > 0) {
             try {
+                String listName = "Film list";
+                Utils.checkDirectory(path);
+                path = String.format("%s\\%s.xml", path, fileName);
+                File file = new File(path);
+                filmList.setName(listName);
                 JAXBContext context = JAXBContext.newInstance(filmList.getClass());
                 Marshaller m = context.createMarshaller();
                 m.setProperty(Marshaller.JAXB_FORMATTED_OUTPUT, true);
                 m.marshal(filmList, file);
+                return file;
             } catch (Exception e) {
                 log.error("Marshalling file", e);
+
             }
-            return file;
         }
         return null;
     }
@@ -263,19 +267,22 @@ public class HTMLParser {
 
     /**
      * Obtiene una lista de películas con una puntuación superior a la indicada.
+     *
      * @param filmList lista inicial de películas.
-     * @param rating puntuación de la película.
+     * @param rating   puntuación de la película.
      * @return lista filtrada de películas
      */
-    public List getFilmsByRating(List<Film> filmList, String rating) {
-        double ratingParsed = Double.parseDouble(rating);
+    @SuppressWarnings("unchecked")
+    public <T extends Serializable> T getFilmsByRating(List<Film> filmList, String rating) {
+        double ratingParsed = Utils.replace(rating);
         ArrayList<Film> filteredList = new ArrayList<>();
+        T o;
         for (Film film : filmList) {
             if (film.getFilmRating() >= ratingParsed) {
                 filteredList.add(film);
             }
         }
-        return filteredList;
+        o = (T) filteredList;
+        return o;
     }
-
 }

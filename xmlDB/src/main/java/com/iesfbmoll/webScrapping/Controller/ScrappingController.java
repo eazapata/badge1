@@ -39,6 +39,4 @@ public class ScrappingController {
         htmlParser.marshall2JSON(FILE_NAME, filmList.getFilms(), name);
         return filmList.getFilms();
     }
-
-
 }

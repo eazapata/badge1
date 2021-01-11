@@ -22,6 +22,4 @@ public class ScrappingController {
         htmlParser.marshall2JSON(FILE_PATH, arrData, name);
         return arrData;
     }
-
-
 }
