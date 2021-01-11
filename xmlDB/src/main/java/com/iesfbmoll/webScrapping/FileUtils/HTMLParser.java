@@ -16,6 +16,7 @@ import org.jsoup.nodes.Element;
 import org.jsoup.select.Elements;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
 import javax.xml.bind.JAXBContext;
 import javax.xml.bind.Marshaller;
 import javax.xml.bind.Unmarshaller;
@@ -51,7 +52,8 @@ public class HTMLParser {
     private final String LINK_ATTR = "href";
 
     /**
-     * Método que comprueba el estado de una página indicada y devuelve su resultando conun entero.
+     * Método que comprueba el estado de una página indicada y devuelve su resultando con un entero.
+     *
      * @param URI String que contiene la dirección de la página a la que se quiere acceder.
      * @return Código que indica el estado de la página.
      */
@@ -70,6 +72,7 @@ public class HTMLParser {
 
     /**
      * Método que obtiene el contenido de una página y convierte en un documento.
+     *
      * @param URI String que contiene la dirección de la página a la que se quiere acceder.
      * @return Documento que contiene la información de la página.
      */
@@ -85,6 +88,7 @@ public class HTMLParser {
 
     /**
      * Método que obtiene la información de una página y la almacena en un arrayList.
+     *
      * @param URI String que contiene la dirección de la página a la que se quiere acceder.
      * @param <T> Objeto género al que es convertido el arrayList.
      * @return El objeto génerico para evitar castings posteriores.
@@ -109,8 +113,9 @@ public class HTMLParser {
 
     /**
      * Método que recibe unos elementos que son peliculas y una lista de peliculas a rellenar.
+     *
      * @param filmsElements Películas obtenidas del método getWebContent.
-     * @param films List de peliculas donde almacenaremos la información.
+     * @param films         List de peliculas donde almacenaremos la información.
      */
     private void getDataFilm(Elements filmsElements, List<Film> films) {
         String errorText = "Información no disponible.";
@@ -124,7 +129,7 @@ public class HTMLParser {
                 Elements dataFilm = document.select(ROW_SELECTOR);
                 film.setYear(dataFilm.select(YEAR_SELECTOR).text());
                 film.setDuration(dataFilm.select(DURATION_SELECTOR).text());
-                film.setFilmRating(document.select(RATING_SELECTOR).text());
+                film.setFilmRating(Utils.replace(document.select(RATING_SELECTOR).text()));
                 film.setDescription(dataFilm.select(DESCRIPTION_SELECTOR).text());
                 if (dataFilm.select(CAST_SELECTOR).size() == 0) {
                     film.setCast(getCast(dataFilm.select(CAST_SELECTOR_NULL)));
@@ -141,8 +146,9 @@ public class HTMLParser {
 
     /**
      * Método que obtiene el reparto de una película.
+     *
      * @param castElements Elementos de la página que corresponden con el reparto de actores.
-     * @param <T> Objeto género al que es convertido el arrayList.
+     * @param <T>          Objeto género al que es convertido el arrayList.
      * @return List de String donde almacenaremos la información del reparto.
      */
     @SuppressWarnings("unchecked")
@@ -150,11 +156,11 @@ public class HTMLParser {
         ArrayList<String> cast = new ArrayList<>();
         T o;
         int i = 0;
-        while ((i < 5)){
-            if(i == castElements.size()){
+        while ((i < 5)) {
+            if (i == castElements.size()) {
                 i = 5;
-            }else{
-                String castElement = castElements.get(i).text();
+            } else {
+                String castElement = Utils.deleteChar(castElements.get(i).text());
                 cast.add(castElement);
                 i++;
             }
@@ -165,16 +171,17 @@ public class HTMLParser {
 
     /**
      * Método que convierte en un archivo JSON la información obtenida de las películas.
+     *
      * @param filePath Ruta dondo tendremos el archivo.
-     * @param list List donde tenemos almacenada la información de las películas.
+     * @param list     List donde tenemos almacenada la información de las películas.
      * @param fileName Nombre del archivo donde se guardará la información.
      * @return archivo donde se ha almacenado la información.
      */
-    public File marshall2JSON(String filePath, List<?> list,String fileName) {
-
-        filePath = String.format("%s\\%s.json",filePath,fileName);
+    public File marshall2JSON(String filePath, List<?> list, String fileName) {
+        Utils.checkDirectory(filePath);
+        filePath = String.format("%s\\%s.json", filePath, fileName);
         File file = new File(filePath);
-        if(list.size() > 0){
+        if (list.size() > 0) {
             try {
                 getMapper().writeValue(file, list);
             } catch (IOException e) {
@@ -187,9 +194,10 @@ public class HTMLParser {
 
     /**
      * Método que extrae la información de un JSON.
-     * @param file archivo del cual se extrae la información.
+     *
+     * @param file      archivo del cual se extrae la información.
      * @param typeClass clase del objeto almacenado en el List.
-     * @param <T> Objeto género al que es convertido el arrayList.
+     * @param <T>       Objeto género al que es convertido el arrayList.
      * @return list donde tenemos la información del archivo.
      */
     @SuppressWarnings("unchecked")
@@ -203,11 +211,20 @@ public class HTMLParser {
         return (T) list;
     }
 
-    public File marshall2XML(String path, FilmList filmList ,String fileName) {
-        path = String.format("%s\\%s.xml",path,fileName);
+    /**
+     * Método para convertir la información almancenada en nuestro sistema en un archivo xml
+     *
+     * @param path     ruta del archivo donde se guardará la información.
+     * @param filmList objeto que almacena la información.
+     * @param fileName nombre del archivo.
+     * @return Devuelve el archivo donde se ha guardado la información.
+     */
+    public File marshall2XML(String path, FilmList filmList, String fileName) {
+        Utils.checkDirectory(path);
+        path = String.format("%s\\%s.xml", path, fileName);
         File file = new File(path);
         filmList.setName("Lista de peliculas");
-        if(filmList.getFilms().size() > 0){
+        if (filmList.getFilms().size() > 0) {
             try {
                 JAXBContext context = JAXBContext.newInstance(filmList.getClass());
                 Marshaller m = context.createMarshaller();
@@ -220,6 +237,16 @@ public class HTMLParser {
         }
         return null;
     }
+
+    /**
+     * Método que extrae la información de un archivo y la convierte a información de nuestro sistema.
+     *
+     * @param file     archivo del cual extrae la información.
+     * @param filmList bean donde lo guardará.
+     * @param <T>      Génerico usado para devolver el objeto.
+     * @return bean con la información.
+     */
+    @SuppressWarnings("unchecked")
     public <T extends Serializable> T unmarshallContent(File file, T filmList) {
         try {
             JAXBContext context = JAXBContext.newInstance(filmList.getClass());
@@ -227,11 +254,28 @@ public class HTMLParser {
             if (file.exists() && !file.isDirectory()) {
                 filmList = (T) um.unmarshal(file);
             }
-            return  filmList;
+            return filmList;
         } catch (Exception e) {
             log.error("Marshalling file", e);
         }
         return null;
+    }
+
+    /**
+     * Obtiene una lista de películas con una puntuación superior a la indicada.
+     * @param filmList lista inicial de películas.
+     * @param rating puntuación de la película.
+     * @return lista filtrada de películas
+     */
+    public List getFilmsByRating(List<Film> filmList, String rating) {
+        double ratingParsed = Double.parseDouble(rating);
+        ArrayList<Film> filteredList = new ArrayList<>();
+        for (Film film : filmList) {
+            if (film.getFilmRating() >= ratingParsed) {
+                filteredList.add(film);
+            }
+        }
+        return filteredList;
     }
 
 }

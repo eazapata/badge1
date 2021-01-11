@@ -17,11 +17,26 @@ public class ScrappingController {
 
     @GetMapping("/getfilms")
     public List<Film> getGames(@RequestParam(value = "name", defaultValue = "") String name) {
+        String uri = String.format("%s%s", DEFAULT_URI, name);
         HTMLParser htmlParser = new HTMLParser();
         FilmList filmList = new FilmList();
-        filmList.setFilms(htmlParser.getWebContent(DEFAULT_URI + name));
-        htmlParser.marshall2XML(FILE_NAME,filmList,name);
-        htmlParser.marshall2JSON(FILE_NAME,filmList.getFilms(), name);
+        filmList.setFilms(htmlParser.getWebContent(uri));
+        htmlParser.marshall2XML(FILE_NAME, filmList, name);
+        htmlParser.marshall2JSON(FILE_NAME, filmList.getFilms(), name);
+        return filmList.getFilms();
+    }
+
+    @GetMapping("/getBestFilms")
+    public List<Film> getBestFilms(@RequestParam(value = "name", defaultValue = "") String name,
+                                   @RequestParam(value = "rating", defaultValue = "5.0") String rating) {
+        String uri = String.format("%s%s", DEFAULT_URI, name);
+        HTMLParser htmlParser = new HTMLParser();
+        FilmList filmList = new FilmList();
+        ArrayList<Film> films;
+        films = htmlParser.getWebContent(uri);
+        filmList.setFilms(htmlParser.getFilmsByRating(films, rating));
+        htmlParser.marshall2XML(FILE_NAME, filmList, name);
+        htmlParser.marshall2JSON(FILE_NAME, filmList.getFilms(), name);
         return filmList.getFilms();
     }
 

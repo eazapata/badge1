@@ -13,35 +13,38 @@ import java.util.ArrayList;
 @SpringBootTest
 class WebScrappingApplicationTests {
     private static final String DEFAULT_URI = "https://www.filmaffinity.com/es/search.php?stext=";
-    private final String fileName = String.format("%s\\.fbmoll\\", System.getProperty("user.home"));
+    private final String pathFile = String.format("%s\\.fbmoll\\", System.getProperty("user.home"));
     private final String FILM_TITLE = "joker";
 
     @Test
     void checkContent() {
+        String uri = String.format("%s%s",DEFAULT_URI,FILM_TITLE);
         ArrayList<Film> films;
         HTMLParser htmlParser = new HTMLParser();
-        films = htmlParser.getWebContent(DEFAULT_URI + FILM_TITLE);
-        Assert.notEmpty(films, "Lista vacia");
+        films = htmlParser.getWebContent(uri);
+        Assert.notEmpty(films, "List empty");
     }
 
     @Test
     void checkJson() {
+        String uri = String.format("%s%s",DEFAULT_URI,FILM_TITLE);
         ArrayList<Film> films;
         HTMLParser htmlParser = new HTMLParser();
-        films = htmlParser.getWebContent(DEFAULT_URI);
-        File file = htmlParser.marshall2JSON(fileName, films, FILM_TITLE);
+        films = htmlParser.getWebContent(uri);
+        File file = htmlParser.marshall2JSON(pathFile, films, FILM_TITLE);
         Assert.isTrue(file.length() > 0, "File empty");
     }
 
     @Test
     void checkJsonContent() {
+        String uri = String.format("%s%s",DEFAULT_URI,FILM_TITLE);
         ArrayList<Film> films;
         ArrayList<Film> jsonFilms;
         HTMLParser htmlParser = new HTMLParser();
-        films = htmlParser.getWebContent(DEFAULT_URI);
-        File file = htmlParser.marshall2JSON(fileName, films, FILM_TITLE);
+        films = htmlParser.getWebContent(uri);
+        File file = htmlParser.marshall2JSON(pathFile, films, FILM_TITLE);
         jsonFilms = htmlParser.unMarshallJson(file, Film.class);
         Assert.isTrue(StringUtils.equals(films.get(0).getTitle(), jsonFilms.get(0).getTitle()),
-                "Primera pelicula diferente");
+                "Films not match.");
     }
 }

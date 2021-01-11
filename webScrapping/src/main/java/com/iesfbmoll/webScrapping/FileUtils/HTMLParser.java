@@ -8,6 +8,7 @@ import com.fasterxml.jackson.databind.MapperFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.module.jaxb.JaxbAnnotationIntrospector;
 import com.iesfbmoll.webScrapping.Data.Film;
+import org.apache.commons.lang3.StringUtils;
 import org.jsoup.Connection;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
@@ -27,9 +28,7 @@ public class HTMLParser {
         mapper.enable(MapperFeature.USE_WRAPPER_NAME_AS_PROPERTY_NAME);
         AnnotationIntrospector introspector = new JaxbAnnotationIntrospector(mapper.getTypeFactory());
         mapper.setAnnotationIntrospector(introspector);
-        // Don't close the output stream
         mapper.configure(JsonGenerator.Feature.AUTO_CLOSE_TARGET, false);
-        // Don't include NULL properties.
         mapper.setSerializationInclusion(JsonInclude.Include.NON_NULL);
         return mapper;
     }
@@ -49,7 +48,7 @@ public class HTMLParser {
     private final String LINK_ATTR = "href";
 
     /**
-     * Método que comprueba el estado de una página indicada y devuelve su resultando conun entero.
+     * Método que comprueba el estado de una página indicada y devuelve su resultado con un entero.
      *
      * @param URI String que contiene la dirección de la página a la que se quiere acceder.
      * @return Código que indica el estado de la página.
@@ -87,7 +86,7 @@ public class HTMLParser {
      * Método que obtiene la información de una página y la almacena en un arrayList.
      *
      * @param URI String que contiene la dirección de la página a la que se quiere acceder.
-     * @param <T> Objeto género al que es convertido el arrayList.
+     * @param <T> Objeto génerico al que es convertido el arrayList.
      * @return El objeto génerico para evitar castings posteriores.
      */
     @SuppressWarnings("unchecked")
@@ -104,7 +103,6 @@ public class HTMLParser {
         } else {
             log.error("La página solicitada no está activa actualmente.");
         }
-
         return null;
     }
 
@@ -116,6 +114,7 @@ public class HTMLParser {
      */
     private void getDataFilm(Elements filmsElements, List<Film> films) {
         String errorText = "Información no disponible.";
+
         for (Element elem : filmsElements.select(FILM_DATA_SELECTOR)) {
             Film film = new Film();
             film.setLink(elem.select(LINK_TAG).attr(LINK_ATTR));
@@ -128,6 +127,7 @@ public class HTMLParser {
                 film.setDuration(dataFilm.select(DURATION_SELECTOR).text());
                 film.setFilmRating(document.select(RATING_SELECTOR).text());
                 film.setDescription(dataFilm.select(DESCRIPTION_SELECTOR).text());
+
                 if (dataFilm.select(CAST_SELECTOR).size() == 0) {
                     film.setCast(getCast(dataFilm.select(CAST_SELECTOR_NULL)));
                 } else {
@@ -136,6 +136,8 @@ public class HTMLParser {
             } else {
                 film.setYear(errorText);
                 film.setDuration(errorText);
+                film.setFilmRating(StringUtils.EMPTY);
+                film.setDescription(errorText);
             }
             films.add(film);
         }
@@ -145,7 +147,7 @@ public class HTMLParser {
      * Método que obtiene el reparto de una película.
      *
      * @param castElements Elementos de la página que corresponden con el reparto de actores.
-     * @param <T>          Objeto género al que es convertido el arrayList.
+     * @param <T>          Objeto génerico al que es convertido el arrayList.
      * @return List de String donde almacenaremos la información del reparto.
      */
     @SuppressWarnings("unchecked")
@@ -157,7 +159,7 @@ public class HTMLParser {
             if (i == castElements.size()) {
                 i = 5;
             } else {
-                String castElement = castElements.get(i).text();
+                String castElement = Utils.deleteChar(castElements.get(i).text());
                 cast.add(castElement);
                 i++;
             }
@@ -169,20 +171,20 @@ public class HTMLParser {
     /**
      * Método que convierte en un archivo JSON la información obtenida de las películas.
      *
-     * @param filePath Ruta dondo tendremos el archivo.
+     * @param filePath Ruta donde tendremos el archivo.
      * @param list     List donde tenemos almacenada la información de las películas.
      * @param fileName Nombre del archivo donde se guardará la información.
      * @return archivo donde se ha almacenado la información.
      */
     public File marshall2JSON(String filePath, List<?> list, String fileName) {
-
+        Utils.checkDirectory(filePath);
         filePath = String.format("%s\\%s.json", filePath, fileName);
         File file = new File(filePath);
         if (list.size() > 0) {
             try {
                 getMapper().writeValue(file, list);
             } catch (IOException e) {
-                e.printStackTrace();
+                log.error("Marshalling error.");
             }
             return file;
         }
@@ -194,7 +196,7 @@ public class HTMLParser {
      *
      * @param file      archivo del cual se extrae la información.
      * @param typeClass clase del objeto almacenado en el List.
-     * @param <T>       Objeto género al que es convertido el arrayList.
+     * @param <T>       Objeto génerico al que es convertido el arrayList.
      * @return list donde tenemos la información del archivo.
      */
     @SuppressWarnings("unchecked")
@@ -203,9 +205,11 @@ public class HTMLParser {
         try {
             list = getMapper().readValue(file, getMapper().getTypeFactory().constructCollectionType(ArrayList.class, typeClass));
         } catch (IOException e) {
-            e.printStackTrace();
+            log.error("Unmarshalling error");
         }
         return (T) list;
     }
+
+
 }
 
