@@ -1,33 +1,28 @@
 package com.iesfbmoll.webScrapping.Data;
 
-import javax.persistence.Entity;
-import javax.persistence.GeneratedValue;
-import javax.persistence.GenerationType;
-import javax.persistence.Id;
+import com.iesfbmoll.webScrapping.FileUtils.HashMapConverter;
+import netscape.javascript.JSObject;
+import org.springframework.boot.autoconfigure.domain.EntityScan;
+
+import javax.persistence.*;
+import java.util.ArrayList;
+import java.util.Map;
 
 @Entity
 public class Film {
     @Id
     @GeneratedValue(strategy= GenerationType.AUTO)
     private Long id;
-
-
     private String link;
     private String title;
     private String year;
     private String duration;
-    //private ArrayList<String> cast;
+  //  @Transient
+  // @Convert(converter = HashMapConverter.class)
+    //private JSObject cast;
+   // private ArrayList<String> cast;
     private double filmRating;
-    //private String description;
-
-
-    public Long getId() {
-        return id;
-    }
-
-    public void setId(Long id) {
-        this.id = id;
-    }
+    private String description;
 
     public String getLink() {
         return link;
@@ -61,14 +56,14 @@ public class Film {
         this.duration = duration;
     }
 
-   /* public ArrayList<String> getCast() {
+  /* public ArrayList<String> getCast() {
         return cast;
     }
 
     public void setCast(ArrayList<String> cast) {
         this.cast = cast;
-    }*/
-
+    }
+*/
     public double getFilmRating() {
         return filmRating;
     }
@@ -77,11 +72,12 @@ public class Film {
         this.filmRating = filmRating;
     }
 
- /*   public String getDescription() {
+    public String getDescription() {
         return description;
     }
 
     public void setDescription(String description) {
         this.description = description;
-    }*/
+    }
+
 }
