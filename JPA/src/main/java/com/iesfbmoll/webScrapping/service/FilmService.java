@@ -1,5 +1,6 @@
 package com.iesfbmoll.webScrapping.service;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.iesfbmoll.webScrapping.Data.Film;
 import com.iesfbmoll.webScrapping.Data.FilmList;
 import com.iesfbmoll.webScrapping.Data.FilmRepository;
@@ -25,16 +26,21 @@ public class FilmService {
         this.repository = repository;
     }
 
-   /* public void getFilmList(String name) {
+    public void setInfo(String name) {
         String uri = String.format("%s%s", DEFAULT_URI, name);
         HTMLParser htmlParser = new HTMLParser();
         FilmList filmList = new FilmList();
         filmList.setFilms(htmlParser.getWebContent(uri));
-        htmlParser.marshall2XML(FILE_NAME, filmList, name);
-        htmlParser.marshall2JSON(FILE_NAME, filmList.getFilms(), name);
-    }*/
+     //   htmlParser.marshall2XML(FILE_NAME, filmList, name);
+       // htmlParser.marshall2JSON(FILE_NAME, filmList.getFilms(), name);
+        for (int i = 0; i < filmList.getFilms().size(); i++) {
+            if (!this.repository.findById(filmList.getFilms().get(i).getId()).isPresent()) {
+                this.repository.save(filmList.getFilms().get(i));
+            }
+        }
+    }
 
-    public List<Film> getBestFilms(String name, String rating) {
+    public List<Film> getBestFilms(String name, String rating) throws JsonProcessingException {
         String uri = String.format("%s%s", DEFAULT_URI, name);
         HTMLParser htmlParser = new HTMLParser();
         FilmList filmList = new FilmList();

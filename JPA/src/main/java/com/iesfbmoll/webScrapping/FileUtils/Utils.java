@@ -7,7 +7,8 @@ import java.io.File;
 import java.util.List;
 
 public class Utils {
-    private static final String invalidChar = ",";
+    private static final String invalidComma = ",";
+    private static final String invalidChar = ")";
     private static final String correctChar = ".";
     private static final String space = "";
 
@@ -32,12 +33,12 @@ public class Utils {
      */
     public static double replace(String string) {
         double numberParsed;
-        if (string.contains(invalidChar)) {
-            string = string.replace(invalidChar, correctChar);
+        if (string.contains(invalidComma)) {
+            string = string.replace(invalidComma, correctChar);
             numberParsed = Double.parseDouble(string);
-        } else if(string.contains(correctChar)) {
+        } else if (string.contains(correctChar)) {
             numberParsed = Double.parseDouble(string);
-        }else{
+        } else {
             numberParsed = 0;
         }
         return numberParsed;
@@ -51,10 +52,28 @@ public class Utils {
      */
     public static String deleteChar(String string) {
 
-        if (string.contains(invalidChar)) {
-            string = string.replace(invalidChar, space);
+        //(X '[^,\)]*')
+        CharSequence[] invalidsChars = {"'", "[", "^", ",", ")", "*","("};
+        for (int i = 0; i < string.length(); i++) {
+            for (CharSequence invalidsChar : invalidsChars) {
+                if (string.contains(invalidsChar)) {
+                    string = string.replace(invalidsChar, "");
+                }
+            }
         }
         return string;
+/*
+        if (string.contains(invalidComma)) {
+            string = string.replace(invalidComma, space);
+        } else if(string.contains(invalidChar)){
+            string = string.replace(invalidChar, space);
+        }
+        return string;*/
+    }
+
+    public static String[] compareAndReplace(String[] line) {
+
+        return line;
     }
 
     /**
@@ -72,4 +91,16 @@ public class Utils {
         }
         return true;
     }
+
+   /* public static void updateFilm (Optional<Film> film, List<Film> filmList, int position){
+
+        film.setId(filmList.get(position).getId());
+        film.setLink(filmList.get(position).getLink());
+        film.setTitle(filmList.get(position).getTitle());
+        film.setYear(filmList.get(position).getYear());
+        film.setDuration(filmList.get(position).getDuration());
+        film.setFilmRating(filmList.get(position).getFilmRating());
+
+
+    }*/
 }

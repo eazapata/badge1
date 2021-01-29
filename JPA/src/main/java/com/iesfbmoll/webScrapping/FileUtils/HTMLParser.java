@@ -1,14 +1,19 @@
 package com.iesfbmoll.webScrapping.FileUtils;
 
 
+import com.fasterxml.jackson.annotation.JsonAutoDetect;
 import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.PropertyAccessor;
 import com.fasterxml.jackson.core.JsonGenerator;
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.AnnotationIntrospector;
 import com.fasterxml.jackson.databind.MapperFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.module.jaxb.JaxbAnnotationIntrospector;
 import com.iesfbmoll.webScrapping.Data.Film;
 import com.iesfbmoll.webScrapping.Data.FilmList;
+import org.json.JSONException;
+import org.json.JSONObject;
 import org.jsoup.Connection;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
@@ -22,7 +27,9 @@ import javax.xml.bind.Marshaller;
 import javax.xml.bind.Unmarshaller;
 import java.io.*;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 
 public class HTMLParser {
@@ -33,6 +40,7 @@ public class HTMLParser {
         AnnotationIntrospector introspector = new JaxbAnnotationIntrospector(mapper.getTypeFactory());
         mapper.setAnnotationIntrospector(introspector);
         mapper.configure(JsonGenerator.Feature.AUTO_CLOSE_TARGET, false);
+        mapper.setVisibility(PropertyAccessor.FIELD, JsonAutoDetect.Visibility.ANY);
         mapper.setSerializationInclusion(JsonInclude.Include.NON_NULL);
         return mapper;
     }
@@ -50,6 +58,8 @@ public class HTMLParser {
     private final String CAST_SELECTOR_NULL = "dd.card-cast";
     private final String LINK_TAG = "a";
     private final String LINK_ATTR = "href";
+    private final String ID_TAG = "div";
+    private final String ID_ATTR = "data-movie-id";
 
     /**
      * Método que comprueba el estado de una página indicada y devuelve su resultando con un entero.
@@ -117,10 +127,11 @@ public class HTMLParser {
      * @param filmsElements Películas obtenidas del método getWebContent.
      * @param films         List de peliculas donde almacenaremos la información.
      */
-    private void getDataFilm(Elements filmsElements, List<Film> films) {
+    private void getDataFilm(Elements filmsElements, List<Film> films)  {
         String errorText = "Información no disponible.";
         for (Element elem : filmsElements.select(FILM_DATA_SELECTOR)) {
             Film film = new Film();
+            film.setId(Long.parseLong(elem.select(ID_TAG).attr(ID_ATTR)));
             film.setLink(elem.select(LINK_TAG).attr(LINK_ATTR));
             film.setTitle(elem.select(TITLE_SELECTOR).text());
 
@@ -130,17 +141,17 @@ public class HTMLParser {
                 film.setYear(dataFilm.select(YEAR_SELECTOR).text());
                 film.setDuration(dataFilm.select(DURATION_SELECTOR).text());
                 film.setFilmRating(Utils.replace(document.select(RATING_SELECTOR).text()));
-                //film.setDescription(dataFilm.select(DESCRIPTION_SELECTOR).text());
-             /*   if (dataFilm.select(CAST_SELECTOR).size() == 0) {
-                    film.setCast(getCast(dataFilm.select(CAST_SELECTOR_NULL)));
+               // film.setDescription(dataFilm.select(DESCRIPTION_SELECTOR).text());
+                if (dataFilm.select(CAST_SELECTOR).size() == 0) {
+                    film.setMetaData(getCast(dataFilm.select(CAST_SELECTOR_NULL)));
                 } else {
-                    film.setCast(getCast(dataFilm.select(CAST_SELECTOR)));
-                }*/
+                    film.setMetaData(getCast(dataFilm.select(CAST_SELECTOR)));
+                }
             } else {
                 film.setYear(errorText);
                 film.setDuration(errorText);
                 film.setFilmRating(0);
-               // film.setDescription(errorText);
+                // film.setDescription(errorText);
             }
             films.add(film);
         }
@@ -149,26 +160,32 @@ public class HTMLParser {
     /**
      * Método que obtiene el reparto de una película.
      *
+     * @param //<T>        Objeto género al que es convertido el arrayList.
      * @param castElements Elementos de la página que corresponden con el reparto de actores.
-     * @param <T>          Objeto género al que es convertido el arrayList.
      * @return List de String donde almacenaremos la información del reparto.
      */
     @SuppressWarnings("unchecked")
-    private <T extends Serializable> T getCast(Elements castElements) {
+    private Map getCast(Elements castElements)  {
         ArrayList<String> cast = new ArrayList<>();
-        T o;
-        int i = 0;
+        HashMap<String,Object> map = new HashMap<>();
+        JSONObject obj = new JSONObject();
+        Integer i = 0;
         while ((i < 5)) {
             if (i == castElements.size()) {
                 i = 5;
             } else {
                 String castElement = Utils.deleteChar(castElements.get(i).text());
-                cast.add(castElement);
+                String casting = castElement.replaceAll("^[\"']+|[\"']+$", "");
+                try {
+                    map.put(casting,casting);
+                    obj.put(casting,casting);
+                } catch (JSONException e) {
+                    e.printStackTrace();
+                }
                 i++;
             }
         }
-        o = (T) cast;
-        return o;
+        return map;
     }
 
     /**

@@ -1,28 +1,61 @@
 package com.iesfbmoll.webScrapping.Data;
 
-import com.iesfbmoll.webScrapping.FileUtils.HashMapConverter;
-import netscape.javascript.JSObject;
-import org.springframework.boot.autoconfigure.domain.EntityScan;
+
+import com.iesfbmoll.webScrapping.generic.JSONObjectConverter;
+import org.hibernate.annotations.Type;
+import org.json.JSONObject;
 
 import javax.persistence.*;
-import java.util.ArrayList;
+import java.io.IOException;
+import java.io.Serializable;
+import java.util.HashMap;
 import java.util.Map;
 
+
+//@Table(name = "movie")
+//@TypeDef(name = "json", typeClass = JsonStringType.class)
 @Entity
-public class Film {
+@Table(name = "movie")
+public class Film  {
     @Id
-    @GeneratedValue(strategy= GenerationType.AUTO)
     private Long id;
     private String link;
     private String title;
     private String year;
     private String duration;
-  //  @Transient
-  // @Convert(converter = HashMapConverter.class)
-    //private JSObject cast;
-   // private ArrayList<String> cast;
+    @Type( type = "json" )
+    @Column( columnDefinition = "json" )
+    private String[] jsonValue;
+   // private Map<String, Object> metaData = new HashMap<>();
+  /*  @Column(columnDefinition = "TEXT")
+    @Convert(converter= JSONObjectConverter.class)
+    private JSONObject jsonData;*/
     private double filmRating;
     private String description;
+
+    public String[] getJsonValue() {
+        return jsonValue;
+    }
+
+    public void setJsonValue(String[] jsonValue) {
+        this.jsonValue = jsonValue;
+    }
+
+    /* public Map<String, Object> getMetaData() {
+        return metaData;
+    }
+
+    public void setMetaData(Map<String, Object> metaData) {
+        this.metaData = metaData;
+    }
+
+    /* public JSONObject getJsonData() {
+        return jsonData;
+    }
+
+    public void setJsonData(JSONObject jsonData) {
+        this.jsonData = jsonData;
+    }*/
 
     public String getLink() {
         return link;
@@ -56,14 +89,7 @@ public class Film {
         this.duration = duration;
     }
 
-  /* public ArrayList<String> getCast() {
-        return cast;
-    }
 
-    public void setCast(ArrayList<String> cast) {
-        this.cast = cast;
-    }
-*/
     public double getFilmRating() {
         return filmRating;
     }
@@ -80,4 +106,14 @@ public class Film {
         this.description = description;
     }
 
+    public Long getId() {
+        return id;
+    }
+
+    public void setId(Long id) {
+        this.id = id;
+    }
+
 }
+
+
