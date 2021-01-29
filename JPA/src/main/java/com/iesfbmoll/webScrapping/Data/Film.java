@@ -1,7 +1,9 @@
 package com.iesfbmoll.webScrapping.Data;
 
 
-import com.iesfbmoll.webScrapping.generic.JSONObjectConverter;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import generic.JsonToMapConverter;
 import org.hibernate.annotations.Type;
 import org.json.JSONObject;
 
@@ -23,39 +25,18 @@ public class Film  {
     private String title;
     private String year;
     private String duration;
-    @Type( type = "json" )
-    @Column( columnDefinition = "json" )
-    private String[] jsonValue;
-   // private Map<String, Object> metaData = new HashMap<>();
-  /*  @Column(columnDefinition = "TEXT")
-    @Convert(converter= JSONObjectConverter.class)
-    private JSONObject jsonData;*/
+    @Convert(converter = JsonToMapConverter.class)
+    private Map<String, String> otherAttributes;
     private double filmRating;
     private String description;
 
-    public String[] getJsonValue() {
-        return jsonValue;
+    public Map<String, String> getOtherAttributes() {
+        return otherAttributes;
     }
 
-    public void setJsonValue(String[] jsonValue) {
-        this.jsonValue = jsonValue;
+    public void setOtherAttributes(Map<String, String> otherAttributes) {
+        this.otherAttributes = otherAttributes;
     }
-
-    /* public Map<String, Object> getMetaData() {
-        return metaData;
-    }
-
-    public void setMetaData(Map<String, Object> metaData) {
-        this.metaData = metaData;
-    }
-
-    /* public JSONObject getJsonData() {
-        return jsonData;
-    }
-
-    public void setJsonData(JSONObject jsonData) {
-        this.jsonData = jsonData;
-    }*/
 
     public String getLink() {
         return link;

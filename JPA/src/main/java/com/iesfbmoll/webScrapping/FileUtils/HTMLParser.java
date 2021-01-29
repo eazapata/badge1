@@ -5,14 +5,12 @@ import com.fasterxml.jackson.annotation.JsonAutoDetect;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.PropertyAccessor;
 import com.fasterxml.jackson.core.JsonGenerator;
-import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.AnnotationIntrospector;
 import com.fasterxml.jackson.databind.MapperFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.module.jaxb.JaxbAnnotationIntrospector;
 import com.iesfbmoll.webScrapping.Data.Film;
 import com.iesfbmoll.webScrapping.Data.FilmList;
-import org.json.JSONException;
 import org.json.JSONObject;
 import org.jsoup.Connection;
 import org.jsoup.Jsoup;
@@ -143,9 +141,9 @@ public class HTMLParser {
                 film.setFilmRating(Utils.replace(document.select(RATING_SELECTOR).text()));
                // film.setDescription(dataFilm.select(DESCRIPTION_SELECTOR).text());
                 if (dataFilm.select(CAST_SELECTOR).size() == 0) {
-                    film.setMetaData(getCast(dataFilm.select(CAST_SELECTOR_NULL)));
+                    film.setOtherAttributes(getCast(dataFilm.select(CAST_SELECTOR_NULL)));
                 } else {
-                    film.setMetaData(getCast(dataFilm.select(CAST_SELECTOR)));
+                    film.setOtherAttributes(getCast(dataFilm.select(CAST_SELECTOR)));
                 }
             } else {
                 film.setYear(errorText);
@@ -165,9 +163,9 @@ public class HTMLParser {
      * @return List de String donde almacenaremos la información del reparto.
      */
     @SuppressWarnings("unchecked")
-    private Map getCast(Elements castElements)  {
-        ArrayList<String> cast = new ArrayList<>();
-        HashMap<String,Object> map = new HashMap<>();
+    private HashMap<String, String> getCast(Elements castElements)  {
+        String[] cast = new String[5];
+        HashMap<String,String> map = new HashMap<>();
         JSONObject obj = new JSONObject();
         Integer i = 0;
         while ((i < 5)) {
@@ -176,12 +174,8 @@ public class HTMLParser {
             } else {
                 String castElement = Utils.deleteChar(castElements.get(i).text());
                 String casting = castElement.replaceAll("^[\"']+|[\"']+$", "");
-                try {
-                    map.put(casting,casting);
-                    obj.put(casting,casting);
-                } catch (JSONException e) {
-                    e.printStackTrace();
-                }
+                map.put(casting,casting);
+                cast[i] = casting;
                 i++;
             }
         }
