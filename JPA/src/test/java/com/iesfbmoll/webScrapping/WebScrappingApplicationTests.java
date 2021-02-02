@@ -1,16 +1,18 @@
 package com.iesfbmoll.webScrapping;
 
-import com.iesfbmoll.webScrapping.Data.Film;
+import com.iesfbmoll.webScrapping.Data.Movie;
 import com.iesfbmoll.webScrapping.Data.FilmList;
+import com.iesfbmoll.webScrapping.Data.FilmRepository;
 import com.iesfbmoll.webScrapping.FileUtils.HTMLParser;
 import com.iesfbmoll.webScrapping.FileUtils.Utils;
+import com.iesfbmoll.webScrapping.service.FilmService;
 import org.junit.jupiter.api.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.util.Assert;
 import org.apache.commons.lang3.StringUtils;
-import org.springframework.util.CollectionUtils;
 
 import java.io.File;
 import java.util.ArrayList;
@@ -19,48 +21,43 @@ import java.util.ArrayList;
 class WebScrappingApplicationTests {
     private static final String DEFAULT_URI = "https://www.filmaffinity.com/es/search.php?stext=";
     private final String pathFile = String.format("%s\\.fbmoll\\", System.getProperty("user.home"));
-    private final String FILM_TITLE = "joker";
+    private final String FILM_TITLE = "batman";
     private Logger logger = LoggerFactory.getLogger(this.getClass());
 
+    @Autowired
+    FilmRepository filmRepository;
+
     @Test
-    void checkContent() {
+    void checkRepository() {
+        FilmService filmService = new FilmService(filmRepository);
         String uri = String.format("%s%s", DEFAULT_URI, FILM_TITLE);
-        ArrayList<Film> films;
-        HTMLParser htmlParser = new HTMLParser();
-        films = htmlParser.getWebContent(uri);
-        Assert.notEmpty(films, "List empty");
+        this.filmRepository.deleteAll();
+        filmService.setInfo(uri);
+        Assert.isTrue(filmRepository.findByTitleContaining(FILM_TITLE) != null,
+                "Repository null.");
     }
 
     @Test
-    void checkJson() {
+    void checkTime() {
+        FilmService filmService = new FilmService(filmRepository);
         String uri = String.format("%s%s", DEFAULT_URI, FILM_TITLE);
-        ArrayList<Film> films;
-        HTMLParser htmlParser = new HTMLParser();
-        Long now = System.currentTimeMillis();
-        films = htmlParser.getWebContent(uri);
-        Long time = System.currentTimeMillis()-now;
-        logger.info(String.format("Peticion web scrapping realizada en %s ms",time));
-        File file = htmlParser.marshall2JSON(pathFile, films, FILM_TITLE);
-        Assert.isTrue(file.length() > 0, "File empty");
+        Long time = filmService.setInfo(uri);
+        logger.info(String.format("Peticion web scrapping realizada en %s ms", time));
+        Assert.isTrue(filmRepository.findByTitleContaining(FILM_TITLE) != null,
+                "Repository not updated.");
     }
 
     @Test
     void checkJsonContent() {
         String uri = String.format("%s%s", DEFAULT_URI, FILM_TITLE);
-        ArrayList<Film> films;
-        ArrayList<Film> jsonFilms;
+        ArrayList<Movie> films;
+        ArrayList<Movie> jsonFilms;
         HTMLParser htmlParser = new HTMLParser();
         films = htmlParser.getWebContent(uri);
         File file = htmlParser.marshall2JSON(pathFile, films, FILM_TITLE);
-        jsonFilms = htmlParser.unMarshallJson(file, Film.class);
+        jsonFilms = htmlParser.unMarshallJson(file, Movie.class);
         Assert.isTrue(StringUtils.equals(films.get(0).getTitle(), jsonFilms.get(0).getTitle()),
                 "Films not match.");
-    }
-
-    @Test
-    void getStats(){
-        int data[]={33,3,4,5};
-        //https://www.tutorialspoint.com/commons_collections/commons_collections_filtering_objects.htm
     }
 
     @Test
@@ -84,7 +81,7 @@ class WebScrappingApplicationTests {
 
         File jsonFile = htmlParser.marshall2JSON(pathFile, filmList.getFilms(), FILM_TITLE);
         FilmList jsonList = new FilmList();
-        jsonList.setFilms(htmlParser.unMarshallJson(jsonFile, Film.class));
+        jsonList.setFilms(htmlParser.unMarshallJson(jsonFile, Movie.class));
 
         File xmlFile = htmlParser.marshall2XML(pathFile, filmList, FILM_TITLE);
         FilmList xmlList = htmlParser.unmarshallContent(xmlFile, filmList);
@@ -99,7 +96,7 @@ class WebScrappingApplicationTests {
         String uri = String.format("%s%s", DEFAULT_URI, FILM_TITLE);
         FilmList filmList = new FilmList();
         HTMLParser htmlParser = new HTMLParser();
-        ArrayList<Film> films = htmlParser.getWebContent(uri);
+        ArrayList<Movie> films = htmlParser.getWebContent(uri);
         filmList.setFilms(htmlParser.getFilmsByRating(films, RATING));
         boolean correctRating = Utils.checkRating(filmList.getFilms(), RATING);
         Assert.isTrue(correctRating, "Rating wrong.");

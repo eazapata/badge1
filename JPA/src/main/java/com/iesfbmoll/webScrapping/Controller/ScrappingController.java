@@ -1,7 +1,8 @@
 package com.iesfbmoll.webScrapping.Controller;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.iesfbmoll.webScrapping.Data.Film;
+
+import com.iesfbmoll.webScrapping.Data.Movie;
+import com.iesfbmoll.webScrapping.FileUtils.HTMLParser;
 import com.iesfbmoll.webScrapping.FileUtils.Utils;
 import com.iesfbmoll.webScrapping.service.FilmService;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -20,16 +21,16 @@ public class ScrappingController {
     }
 
 
-    @GetMapping("/getfilms")
-    public Iterable<Film> getGames(@RequestParam(value = "name", defaultValue = "") String name) {
+    @GetMapping("/setInfo")
+    public Iterable<Movie> getGames(@RequestParam(value = "name", defaultValue = "") String name) {
         filmService.setInfo(name);
         return filmService.getRepository().findByTitleContaining(name);
     }
 
-   /* @GetMapping("/getBestFilms")
-    public List<Film> getBestFilms(@RequestParam(value = "name", defaultValue = "") String name,
-                                   @RequestParam(value = "rating", defaultValue = "5.0") String rating) {
+    @GetMapping("/getInfo")
+    public List<Movie> getInfo(@RequestParam(value = "name", defaultValue = "") String name,
+                               @RequestParam(value = "rating", defaultValue = "0.0") String rating) {
 
-       return filmService.getRepository().finbest(name,Utils.replace(rating));
-    }*/
+        return filmService.getInfo(name,rating);
+    }
 }

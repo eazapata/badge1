@@ -1,41 +1,35 @@
 package com.iesfbmoll.webScrapping.Data;
 
-
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import generic.JsonToMapConverter;
-import org.hibernate.annotations.Type;
-import org.json.JSONObject;
+
 
 import javax.persistence.*;
-import java.io.IOException;
-import java.io.Serializable;
-import java.util.HashMap;
 import java.util.Map;
 
 
-//@Table(name = "movie")
-//@TypeDef(name = "json", typeClass = JsonStringType.class)
 @Entity
 @Table(name = "movie")
-public class Film  {
+public class Movie {
     @Id
     private Long id;
     private String link;
     private String title;
     private String year;
     private String duration;
+    @Column(columnDefinition = "json")
     @Convert(converter = JsonToMapConverter.class)
-    private Map<String, String> otherAttributes;
+    private Map<String, String> casting;
     private double filmRating;
-    private String description;
+    @Column(columnDefinition = "json")
+    @Convert(converter = JsonToMapConverter.class)
+    private Map<String, String> description;
 
-    public Map<String, String> getOtherAttributes() {
-        return otherAttributes;
+    public Map<String, String> getCasting() {
+        return casting;
     }
 
-    public void setOtherAttributes(Map<String, String> otherAttributes) {
-        this.otherAttributes = otherAttributes;
+    public void setCasting(Map<String, String> otherAttributes) {
+        this.casting = otherAttributes;
     }
 
     public String getLink() {
@@ -70,7 +64,6 @@ public class Film  {
         this.duration = duration;
     }
 
-
     public double getFilmRating() {
         return filmRating;
     }
@@ -79,11 +72,11 @@ public class Film  {
         this.filmRating = filmRating;
     }
 
-    public String getDescription() {
+    public Map<String, String> getDescription() {
         return description;
     }
 
-    public void setDescription(String description) {
+    public void setDescription(Map<String, String> description) {
         this.description = description;
     }
 

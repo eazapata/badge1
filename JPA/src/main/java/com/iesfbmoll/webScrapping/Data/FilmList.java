@@ -3,6 +3,7 @@ package com.iesfbmoll.webScrapping.Data;
 import javax.xml.bind.annotation.*;
 import java.io.Serializable;
 import java.util.ArrayList;
+import java.util.List;
 
 @XmlRootElement(name = "myFilms")
 @XmlAccessorType(XmlAccessType.FIELD)
@@ -12,7 +13,7 @@ public class FilmList implements Serializable {
 
     @XmlElementWrapper(name = "films")
     @XmlElement(name = "film")
-    private ArrayList<Film> films;
+    private List<Movie> films;
 
     public String getName() {
         return name;
@@ -22,11 +23,11 @@ public class FilmList implements Serializable {
         this.name = name;
     }
 
-    public void setFilms(ArrayList<Film> films) {
+    public void setFilms(List<Movie> films) {
         this.films = films;
     }
 
-    public ArrayList<Film> getFilms() {
+    public List<Movie> getFilms() {
         return films;
     }
 

@@ -1,15 +1,15 @@
 package com.iesfbmoll.webScrapping.FileUtils;
 
 
-import com.iesfbmoll.webScrapping.Data.Film;
+import com.iesfbmoll.webScrapping.Data.Movie;
+import org.apache.commons.lang3.StringUtils;
 
 import java.io.File;
 import java.util.List;
 
 public class Utils {
-    private static final String invalidComma = ",";
-    private static final String invalidChar = ")";
-    private static final String correctChar = ".";
+    private static final String invalidSeparator = ",";
+    private static final String correctSeparator = ".";
     private static final String space = "";
 
     /**
@@ -33,10 +33,10 @@ public class Utils {
      */
     public static double replace(String string) {
         double numberParsed;
-        if (string.contains(invalidComma)) {
-            string = string.replace(invalidComma, correctChar);
+        if (StringUtils.contains(string, invalidSeparator)) {
+            string = string.replace(invalidSeparator, correctSeparator);
             numberParsed = Double.parseDouble(string);
-        } else if (string.contains(correctChar)) {
+        } else if (StringUtils.contains(string, correctSeparator)) {
             numberParsed = Double.parseDouble(string);
         } else {
             numberParsed = 0;
@@ -50,57 +50,32 @@ public class Utils {
      * @param string nombre del actor que queremos formatar.
      * @return nombre formatado.
      */
-    public static String deleteChar(String string) {
-
-        //(X '[^,\)]*')
-        CharSequence[] invalidsChars = {"'", "[", "^", ",", ")", "*","("};
+    public static String removeInvalidCharacter(String string) {
+        CharSequence[] invalidsChars = {"'", "[", "^", ",", ")", "*", "("};
         for (int i = 0; i < string.length(); i++) {
             for (CharSequence invalidsChar : invalidsChars) {
                 if (string.contains(invalidsChar)) {
-                    string = string.replace(invalidsChar, "");
+                    string = string.replace(invalidsChar, space);
                 }
             }
         }
         return string;
-/*
-        if (string.contains(invalidComma)) {
-            string = string.replace(invalidComma, space);
-        } else if(string.contains(invalidChar)){
-            string = string.replace(invalidChar, space);
-        }
-        return string;*/
+
     }
 
-    public static String[] compareAndReplace(String[] line) {
-
-        return line;
-    }
 
     /**
      * Comprueba la puntuación de cada película de la lista
-     *
      * @param films  lista de peliculas.
      * @param rating puntuacion a comprobrar.
      * @return Si hay una pelicula con una puntuación mayor false, de lo contrario true.
      */
-    public static boolean checkRating(List<Film> films, String rating) {
-        for (Film film : films) {
+    public static boolean checkRating(List<Movie> films, String rating) {
+        for (Movie film : films) {
             if (film.getFilmRating() > Double.parseDouble(rating)) {
                 return false;
             }
         }
         return true;
     }
-
-   /* public static void updateFilm (Optional<Film> film, List<Film> filmList, int position){
-
-        film.setId(filmList.get(position).getId());
-        film.setLink(filmList.get(position).getLink());
-        film.setTitle(filmList.get(position).getTitle());
-        film.setYear(filmList.get(position).getYear());
-        film.setDuration(filmList.get(position).getDuration());
-        film.setFilmRating(filmList.get(position).getFilmRating());
-
-
-    }*/
 }

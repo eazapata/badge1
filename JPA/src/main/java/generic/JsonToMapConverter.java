@@ -1,6 +1,5 @@
 package generic;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.extern.slf4j.Slf4j;
@@ -9,7 +8,6 @@ import org.slf4j.LoggerFactory;
 
 import javax.persistence.AttributeConverter;
 import javax.persistence.Converter;
-import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -21,37 +19,36 @@ public class JsonToMapConverter implements AttributeConverter<Map<String, String
     private static ObjectMapper mapper;
 
     static {
-        // To avoid instantiating ObjectMapper again and again.
         mapper = new ObjectMapper();
     }
 
     @Override
     public String convertToDatabaseColumn(Map<String, String> data) {
         if (null == data) {
-            // You may return null if you prefer that style
             return "{}";
         }
 
         try {
             return mapper.writeValueAsString(data);
 
-        } catch (IOException e) {
-            throw new IllegalArgumentException("Error converting map to JSON", e);
+        } catch (Exception e) {
+            log.error("Error converting map to JSON");
+            return null;
         }
     }
 
     @Override
     public Map<String, String> convertToEntityAttribute(String s) {
         if (null == s) {
-            // You may return null if you prefer that style
             return new HashMap<>();
         }
 
         try {
             return mapper.readValue(s, new TypeReference<Map<String, String>>() {});
 
-        } catch (IOException e) {
-            throw new IllegalArgumentException("Error converting JSON to map", e);
+        } catch (Exception e) {
+            log.error("Error converting JSON to map");
+            return null;
         }
     }
 }

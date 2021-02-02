@@ -9,9 +9,8 @@ import com.fasterxml.jackson.databind.AnnotationIntrospector;
 import com.fasterxml.jackson.databind.MapperFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.module.jaxb.JaxbAnnotationIntrospector;
-import com.iesfbmoll.webScrapping.Data.Film;
+import com.iesfbmoll.webScrapping.Data.Movie;
 import com.iesfbmoll.webScrapping.Data.FilmList;
-import org.json.JSONObject;
 import org.jsoup.Connection;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
@@ -19,6 +18,7 @@ import org.jsoup.nodes.Element;
 import org.jsoup.select.Elements;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.thymeleaf.util.StringUtils;
 
 import javax.xml.bind.JAXBContext;
 import javax.xml.bind.Marshaller;
@@ -103,7 +103,7 @@ public class HTMLParser {
      */
     @SuppressWarnings("unchecked")
     public <T extends Serializable> T getWebContent(String URI) {
-        ArrayList<Film> films = new ArrayList<>();
+        ArrayList<Movie> films = new ArrayList<>();
         T o;
         if (getStatus(URI) == 200) {
             Document document = getHtmlDocument(URI);
@@ -125,10 +125,10 @@ public class HTMLParser {
      * @param filmsElements Películas obtenidas del método getWebContent.
      * @param films         List de peliculas donde almacenaremos la información.
      */
-    private void getDataFilm(Elements filmsElements, List<Film> films)  {
+    private void getDataFilm(Elements filmsElements, List<Movie> films) {
         String errorText = "Información no disponible.";
         for (Element elem : filmsElements.select(FILM_DATA_SELECTOR)) {
-            Film film = new Film();
+            Movie film = new Movie();
             film.setId(Long.parseLong(elem.select(ID_TAG).attr(ID_ATTR)));
             film.setLink(elem.select(LINK_TAG).attr(LINK_ATTR));
             film.setTitle(elem.select(TITLE_SELECTOR).text());
@@ -137,19 +137,24 @@ public class HTMLParser {
                 Document document = getHtmlDocument(film.getLink());
                 Elements dataFilm = document.select(ROW_SELECTOR);
                 film.setYear(dataFilm.select(YEAR_SELECTOR).text());
-                film.setDuration(dataFilm.select(DURATION_SELECTOR).text());
-                film.setFilmRating(Utils.replace(document.select(RATING_SELECTOR).text()));
-               // film.setDescription(dataFilm.select(DESCRIPTION_SELECTOR).text());
-                if (dataFilm.select(CAST_SELECTOR).size() == 0) {
-                    film.setOtherAttributes(getCast(dataFilm.select(CAST_SELECTOR_NULL)));
+                if (StringUtils.equals(dataFilm.select(DURATION_SELECTOR).text(), "")) {
+                    film.setDuration(errorText);
                 } else {
-                    film.setOtherAttributes(getCast(dataFilm.select(CAST_SELECTOR)));
+                    film.setDuration(dataFilm.select(DURATION_SELECTOR).text());
+                }
+                film.setFilmRating(Utils.replace(document.select(RATING_SELECTOR).text()));
+
+                film.setDescription(getDescription(dataFilm));
+                if (dataFilm.select(CAST_SELECTOR).size() == 0) {
+                    film.setCasting(getCasting(dataFilm.select(CAST_SELECTOR_NULL)));
+                } else {
+                    film.setCasting(getCasting(dataFilm.select(CAST_SELECTOR)));
                 }
             } else {
                 film.setYear(errorText);
                 film.setDuration(errorText);
                 film.setFilmRating(0);
-                // film.setDescription(errorText);
+                film.getDescription().put(errorText, errorText);
             }
             films.add(film);
         }
@@ -158,29 +163,37 @@ public class HTMLParser {
     /**
      * Método que obtiene el reparto de una película.
      *
-     * @param //<T>        Objeto género al que es convertido el arrayList.
      * @param castElements Elementos de la página que corresponden con el reparto de actores.
      * @return List de String donde almacenaremos la información del reparto.
      */
-    @SuppressWarnings("unchecked")
-    private HashMap<String, String> getCast(Elements castElements)  {
-        String[] cast = new String[5];
-        HashMap<String,String> map = new HashMap<>();
-        JSONObject obj = new JSONObject();
-        Integer i = 0;
+
+    private Map<String, String> getCasting(Elements castElements) {
+        HashMap<String, String> map = new HashMap<>();
+        int i = 0;
         while ((i < 5)) {
             if (i == castElements.size()) {
                 i = 5;
             } else {
-                String castElement = Utils.deleteChar(castElements.get(i).text());
-                String casting = castElement.replaceAll("^[\"']+|[\"']+$", "");
-                map.put(casting,casting);
-                cast[i] = casting;
+                String key = String.format("actor_%s", i);
+                String castElement = Utils.removeInvalidCharacter(castElements.get(i).text());
+                map.put(key, castElement);
                 i++;
             }
         }
         return map;
     }
+
+    private Map<String, String> getDescription(Elements elements) {
+        String language = "ESP";
+        HashMap<String, String> map = new HashMap<>();
+        if (StringUtils.equals(elements.select(DESCRIPTION_SELECTOR).text(), "")) {
+            map.put(language, "Información no disponible");
+        } else {
+            map.put(language, elements.select(DESCRIPTION_SELECTOR).text());
+        }
+        return map;
+    }
+
 
     /**
      * Método que convierte en un archivo JSON la información obtenida de las películas.
@@ -215,7 +228,7 @@ public class HTMLParser {
      */
     @SuppressWarnings("unchecked")
     public <T extends Serializable> T unMarshallJson(File file, Class<?> typeClass) {
-        ArrayList<Film> list = new ArrayList<>();
+        ArrayList<Movie> list = new ArrayList<>();
         try {
             list = getMapper().readValue(file, getMapper().getTypeFactory().constructCollectionType(ArrayList.class, typeClass));
         } catch (IOException e) {
@@ -284,11 +297,11 @@ public class HTMLParser {
      * @return lista filtrada de películas
      */
     @SuppressWarnings("unchecked")
-    public <T extends Serializable> T getFilmsByRating(List<Film> filmList, String rating) {
+    public <T extends Serializable> T getFilmsByRating(List<Movie> filmList, String rating) {
         double ratingParsed = Utils.replace(rating);
-        ArrayList<Film> filteredList = new ArrayList<>();
+        ArrayList<Movie> filteredList = new ArrayList<>();
         T o;
-        for (Film film : filmList) {
+        for (Movie film : filmList) {
             if (film.getFilmRating() >= ratingParsed) {
                 filteredList.add(film);
             }
@@ -296,4 +309,5 @@ public class HTMLParser {
         o = (T) filteredList;
         return o;
     }
+
 }
