@@ -1,37 +1,41 @@
-package com.iesfbmoll.webScrapping.Data;
+package Data;
 
-import generic.JsonToListConverter;
-import generic.JsonToMapConverter;
-
+import Generic.JsonToMapConverter;
 
 import javax.persistence.*;
-import java.util.List;
 import java.util.Map;
 
-
 @Entity
-@Table(name = "movie")
 public class Movie {
+
     @Id
     private Long id;
     private String link;
     private String title;
     private String year;
     private String duration;
-    @Column(columnDefinition = "json")
-    @Convert(converter = JsonToListConverter.class)
-    private List<String> casting;
     private double filmRating;
     @Column(columnDefinition = "json")
     @Convert(converter = JsonToMapConverter.class)
-    private Map<String,String> description;
+    private Map<String, String> casting;
+    @Column(columnDefinition = "json")
+    @Convert(converter = JsonToMapConverter.class)
+    private Map<String, String> description;
 
-    public List<String> getCasting() {
+    public Map<String, String> getCasting() {
         return casting;
     }
 
-    public void setCasting(List<String> casting) {
-        this.casting = casting;
+    public void setCasting(Map<String, String> otherAttributes) {
+        this.casting = otherAttributes;
+    }
+
+    public Map<String, String> getDescription() {
+        return description;
+    }
+
+    public void setDescription(Map<String, String> description) {
+        this.description = description;
     }
 
     public String getLink() {
@@ -81,14 +85,5 @@ public class Movie {
     public void setId(Long id) {
         this.id = id;
     }
-
-    public Map<String, String> getDescription() {
-        return description;
-    }
-
-    public void setDescription(Map<String, String> description) {
-        this.description = description;
-    }
 }
-
 

@@ -1,8 +1,7 @@
-package generic;
+package Generic;
 
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import lombok.extern.slf4j.Slf4j;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -10,7 +9,6 @@ import javax.persistence.AttributeConverter;
 import javax.persistence.Converter;
 import java.util.HashMap;
 import java.util.Map;
-
 
 @Converter
 public class JsonToMapConverter implements AttributeConverter<Map<String, String>, String> {
@@ -24,7 +22,7 @@ public class JsonToMapConverter implements AttributeConverter<Map<String, String
 
     @Override
     public String convertToDatabaseColumn(Map<String, String> data) {
-        if (data == null) {
+        if (null == data) {
             return "{}";
         }
 
@@ -39,7 +37,7 @@ public class JsonToMapConverter implements AttributeConverter<Map<String, String
 
     @Override
     public Map<String, String> convertToEntityAttribute(String s) {
-        if (s == null) {
+        if (null == s) {
             return new HashMap<>();
         }
 

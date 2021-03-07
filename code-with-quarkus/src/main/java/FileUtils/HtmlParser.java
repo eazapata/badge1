@@ -1,6 +1,7 @@
-package com.iesfbmoll.webScrapping.FileUtils;
+package FileUtils;
 
-
+import Data.Movie;
+import Data.MovieList;
 import com.fasterxml.jackson.annotation.JsonAutoDetect;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.PropertyAccessor;
@@ -9,8 +10,7 @@ import com.fasterxml.jackson.databind.AnnotationIntrospector;
 import com.fasterxml.jackson.databind.MapperFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.module.jaxb.JaxbAnnotationIntrospector;
-import com.iesfbmoll.webScrapping.Data.Movie;
-import com.iesfbmoll.webScrapping.Data.FilmList;
+import org.apache.commons.lang3.StringUtils;
 import org.jsoup.Connection;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
@@ -18,19 +18,19 @@ import org.jsoup.nodes.Element;
 import org.jsoup.select.Elements;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.thymeleaf.util.StringUtils;
 
 import javax.xml.bind.JAXBContext;
 import javax.xml.bind.Marshaller;
 import javax.xml.bind.Unmarshaller;
-import java.io.*;
+import java.io.File;
+import java.io.IOException;
+import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-
-public class HTMLParser {
+public class HtmlParser {
 
     private ObjectMapper getMapper() {
         ObjectMapper mapper = new ObjectMapper();
@@ -43,7 +43,7 @@ public class HTMLParser {
         return mapper;
     }
 
-    private static final Logger log = LoggerFactory.getLogger(HTMLParser.class);
+    private static final Logger log = LoggerFactory.getLogger(HtmlParser.class);
     private final String FILM_SELECTOR = "div.fa-shadow-nb.item-search";
     private final String TITLE_SELECTOR = "div.mc-title";
     private final String FILM_DATA_SELECTOR = "div.movie-card-1";
@@ -98,7 +98,7 @@ public class HTMLParser {
      * Método que obtiene la información de una página y la almacena en un arrayList.
      *
      * @param URI String que contiene la dirección de la página a la que se quiere acceder.
-     * @param <T> Objeto género al que es convertido el arrayList.
+     * @param <T> Objeto génerico al que es convertido el arrayList.
      * @return El objeto génerico para evitar castings posteriores.
      */
     @SuppressWarnings("unchecked")
@@ -128,35 +128,35 @@ public class HTMLParser {
     private void getDataFilm(Elements filmsElements, List<Movie> films) {
         String errorText = "Información no disponible.";
         for (Element elem : filmsElements.select(FILM_DATA_SELECTOR)) {
-            Movie film = new Movie();
-            film.setId(Long.parseLong(elem.select(ID_TAG).attr(ID_ATTR)));
-            film.setLink(elem.select(LINK_TAG).attr(LINK_ATTR));
-            film.setTitle(elem.select(TITLE_SELECTOR).text());
+            Movie movie = new Movie();
+            movie.setId(Long.parseLong(elem.select(ID_TAG).attr(ID_ATTR)));
+            movie.setLink(elem.select(LINK_TAG).attr(LINK_ATTR));
+            movie.setTitle(elem.select(TITLE_SELECTOR).text());
 
-            if (getStatus(film.getLink()) == 200) {
-                Document document = getHtmlDocument(film.getLink());
+            if (getStatus(movie.getLink()) == 200) {
+                Document document = getHtmlDocument(movie.getLink());
                 Elements dataFilm = document.select(ROW_SELECTOR);
-                film.setYear(dataFilm.select(YEAR_SELECTOR).text());
+                movie.setYear(dataFilm.select(YEAR_SELECTOR).text());
                 if (StringUtils.equals(dataFilm.select(DURATION_SELECTOR).text(), "")) {
-                    film.setDuration(errorText);
+                    movie.setDuration(errorText);
                 } else {
-                    film.setDuration(dataFilm.select(DURATION_SELECTOR).text());
+                    movie.setDuration(dataFilm.select(DURATION_SELECTOR).text());
                 }
-                film.setFilmRating(Utils.replace(document.select(RATING_SELECTOR).text()));
+                movie.setFilmRating(Utils.replace(document.select(RATING_SELECTOR).text()));
 
-                film.setDescription(getDescription(dataFilm));
+               movie.setDescription(getDescription(dataFilm));
                 if (dataFilm.select(CAST_SELECTOR).size() == 0) {
-                    film.setCasting(getCasting(dataFilm.select(CAST_SELECTOR_NULL)));
+                    movie.setCasting(getCasting(dataFilm.select(CAST_SELECTOR_NULL)));
                 } else {
-                    film.setCasting(getCasting(dataFilm.select(CAST_SELECTOR)));
+                    movie.setCasting(getCasting(dataFilm.select(CAST_SELECTOR)));
                 }
             } else {
-                film.setYear(errorText);
-                film.setDuration(errorText);
-                film.setFilmRating(0);
-                film.getDescription().put(errorText, errorText);
+                movie.setYear(errorText);
+                movie.setDuration(errorText);
+                movie.setFilmRating(0);
+                movie.getDescription().put(errorText, errorText);
             }
-            films.add(film);
+            films.add(movie);
         }
     }
 
@@ -167,8 +167,8 @@ public class HTMLParser {
      * @return List de String donde almacenaremos la información del reparto.
      */
 
-    private List<String> getCasting(Elements castElements) {
-        List<String> list = new ArrayList<>();
+    private Map<String, String> getCasting(Elements castElements) {
+        HashMap<String, String> map = new HashMap<>();
         int i = 0;
         while ((i < 5)) {
             if (i == castElements.size()) {
@@ -176,11 +176,11 @@ public class HTMLParser {
             } else {
                 String key = String.format("actor_%s", i);
                 String castElement = Utils.removeInvalidCharacter(castElements.get(i).text());
-                list.add(castElement);
+                map.put(key, castElement);
                 i++;
             }
         }
-        return list;
+        return map;
     }
 
     private Map<String, String> getDescription(Elements elements) {
@@ -241,22 +241,22 @@ public class HTMLParser {
      * Método para convertir la información almancenada en nuestro sistema en un archivo xml
      *
      * @param path     ruta del archivo donde se guardará la información.
-     * @param filmList objeto que almacena la información.
+     * @param movieList objeto que almacena la información.
      * @param fileName nombre del archivo.
      * @return Devuelve el archivo donde se ha guardado la información.
      */
-    public File marshall2XML(String path, FilmList filmList, String fileName) {
-        if (filmList.getFilms().size() > 0) {
+    public File marshall2XML(String path, MovieList movieList, String fileName) {
+        if (movieList.getFilms().size() > 0) {
             try {
                 String listName = "Film list";
                 Utils.checkDirectory(path);
                 path = String.format("%s\\%s.xml", path, fileName);
                 File file = new File(path);
-                filmList.setName(listName);
-                JAXBContext context = JAXBContext.newInstance(filmList.getClass());
+                movieList.setName(listName);
+                JAXBContext context = JAXBContext.newInstance(movieList.getClass());
                 Marshaller m = context.createMarshaller();
                 m.setProperty(Marshaller.JAXB_FORMATTED_OUTPUT, true);
-                m.marshal(filmList, file);
+                m.marshal(movieList, file);
                 return file;
             } catch (Exception e) {
                 log.error("Marshalling file", e);
@@ -311,3 +311,4 @@ public class HTMLParser {
     }
 
 }
+

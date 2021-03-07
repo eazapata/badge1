@@ -1,14 +1,13 @@
-package com.iesfbmoll.webScrapping.Data;
+package Data;
+
 
 import javax.xml.bind.annotation.*;
 import java.io.Serializable;
-import java.util.ArrayList;
 import java.util.List;
 
 @XmlRootElement(name = "myFilms")
 @XmlAccessorType(XmlAccessType.FIELD)
-public class FilmList implements Serializable {
-
+public class MovieList implements Serializable {
     @XmlElement(name = "name")
     private String name;
 
@@ -33,3 +32,4 @@ public class FilmList implements Serializable {
     }
 
 }
+
